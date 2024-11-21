@@ -28,8 +28,7 @@ router.post(
       }
       // Функция для получения изображения по умолчанию
       const getRandomPlaceholderImage = () => {
-         // Возвращайте URL изображения по умолчанию
-         return 'https://example.com/default-profile-picture.png'; // Замените на ваше изображение
+         return 'https://example.com/default-profile-picture.png'; 
       };
 
 
@@ -58,9 +57,6 @@ router.post(
             profilePicture: profilePicture || getRandomPlaceholderImage(), // Использование изображения по умолчанию
             isAdmin: false // Если у вас есть поле isAdmin
          });
-
-         // Генерация JWT
-
 
          res.status(201).json({ message: 'Пользователь успешно зарегистрирован!' });
       } catch (error) {
