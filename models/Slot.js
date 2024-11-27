@@ -12,7 +12,7 @@ const SlotGame = sequelize.define('SlotGame', {
       allowNull: false
    },
    betAmount: {
-      type: DataTypes.FLOAT, // Используйте FLOAT для чисел с плавающей запятой
+      type: DataTypes.FLOAT,
       allowNull: false
    },
    turboMode: {
@@ -24,30 +24,30 @@ const SlotGame = sequelize.define('SlotGame', {
       defaultValue: false
    },
    gridState: {
-      type: DataTypes.ARRAY(DataTypes.STRING), // Массив строк для gridState
+      type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: true,
       validate: {
-         isIn: [['red', 'blue', 'green', 'yin_yang', 'hakkero', 'yellow', 'wild']] // Перечисление допустимых значений
+         isIn: [['red', 'blue', 'green', 'yin_yang', 'hakkero', 'yellow', 'wild']]
       }
    },
    lastSpinResult: {
-      type: DataTypes.JSONB, // Используйте JSONB для хранения объектов
+      type: DataTypes.JSONB,
       allowNull: true
    },
    manekiNekoFeature: {
-      type: DataTypes.JSONB, // Используйте JSONB для хранения объектов
+      type: DataTypes.JSONB,
       allowNull: true
    },
    createdAt: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW // Устанавливаем текущее время по умолчанию
+      defaultValue: DataTypes.NOW
    },
    updatedAt: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW // Устанавливаем текущее время по умолчанию
+      defaultValue: DataTypes.NOW
    }
 }, {
-   timestamps: true, // Sequelize автоматически добавит createdAt и updatedAt
+   timestamps: true,
 });
 
 module.exports = SlotGame;

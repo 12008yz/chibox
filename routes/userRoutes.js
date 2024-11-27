@@ -8,7 +8,7 @@ const authMiddleware = require('../middleware/authMiddleware')
 const User = require('../models/User');
 const Notification = require('../models/Notification');
 const Item = require('../models/Item');
-
+const getRandomPlaceholderImage = require('../utils/placeholderImages')
 
 
 
@@ -26,12 +26,6 @@ router.post(
       if (!errors.isEmpty()) {
          return res.status(400).json({ errors: errors.array() });
       }
-      // Функция для получения изображения по умолчанию
-      const getRandomPlaceholderImage = () => {
-         // Возвращайте URL изображения по умолчанию
-         return 'https://example.com/default-profile-picture.png'; // Замените на ваше изображение
-      };
-
 
       const { email, password, username, profilePicture } = req.body;
 
@@ -56,13 +50,10 @@ router.post(
             email,
             password: hashedPassword,
             profilePicture: profilePicture || getRandomPlaceholderImage(), // Использование изображения по умолчанию
-            isAdmin: false // Если у вас есть поле isAdmin
+            isAdmin: false
          });
 
-         // Генерация JWT
-
-
-         res.status(201).json({ message: 'Пользователь успешно зарегистрирован!' });
+         res.status(201).json({ message: 'Пользователь успешно зарегистрирован!', newUser });
       } catch (error) {
          console.error(error);
          res.status(500).json({ message: 'Ошибка при регистрации.' });
@@ -244,6 +235,7 @@ router.post('/inventory', authMiddleware.isAuthenticated, async (req, res) => {
       res.status(500).json({ message: 'Ошибка сервера' });
    }
 });
+
 
 // Удаление предмета из инвентаря 
 

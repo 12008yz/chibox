@@ -13,6 +13,11 @@ const Case = sequelize.define('Case', {
       type: DataTypes.FLOAT,
       allowNull: false,
    },
+   items: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: []
+   },
 }, {
    timestamps: true,
 });

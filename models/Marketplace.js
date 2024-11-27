@@ -6,18 +6,10 @@ const Item = require('./Item');
 const Marketplace = sequelize.define('Marketplace', {
    sellerId: {
       type: DataTypes.INTEGER,
-      references: {
-         model: User,
-         key: 'id',
-      },
       allowNull: false,
    },
    item: {
       type: DataTypes.INTEGER,
-      references: {
-         model: Item,
-         key: 'id',
-      },
       allowNull: false,
    },
    uniqueId: {

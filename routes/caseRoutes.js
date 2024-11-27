@@ -30,4 +30,36 @@ router.post('/', isAuthenticated, isAdmin, async (req, res) => {
    };
 })
 
+router.put('/:id', isAuthenticated, isAdmin, async (req, res) => {
+   try {
+      const caseToUpdate = await Case.findByPk(req.params.id);
+      if (!caseToUpdate) {
+         return res.status(404).json({ message: 'Case not found' });
+      }
+
+      const updatedCase = await caseToUpdate.update(req.body);
+      res.json(updatedCase);
+   } catch (err) {
+      res.status(400).json({ message: err.message });
+   }
+});
+
+router.delete('/:id', isAuthenticated, isAdmin, async (req, res) => {
+   try {
+      const deleteCase = await Case.destroy({
+         where: {
+            id: req.params.id
+         }
+      });
+
+      if (deleteCase === 0) {
+         return res.status(404).json({ message: 'Кейс не найден' });
+      }
+
+      res.json({ message: 'Кейс Удален' });
+   } catch (err) {
+      res.status(400).json({ message: err.message });
+   }
+});
+
 module.exports = router

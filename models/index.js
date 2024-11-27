@@ -16,6 +16,12 @@ Item.belongsTo(Case, { foreignKey: 'caseId' });
 User.hasMany(Notification, { foreignKey: 'receiverId' });
 Notification.belongsTo(User, { foreignKey: 'receiverId' });
 
+SlotGame.hasMany(User, { foreignKey: 'id' })
+User.belongsTo(SlotGame, { foreignKey: 'id' })
+
+Marketplace.hasMany(Item, { foreignKey: "caseId" })
+Item.belongsTo(Marketplace, { foreignKey: "caseId" })
+
 // Экспорт моделей и sequelize
 module.exports = {
    User,

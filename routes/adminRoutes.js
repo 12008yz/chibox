@@ -43,7 +43,7 @@ router.put('/cases/:id', isAuthenticated, isAdmin, async (req, res) => {
          returning: true // Возвращает обновленные записи
       });
       // updatedCases - это массив, где первый элемент - это обновленная запись
-      res.json(updatedCases[0]);
+      res.json(updatedCases);
    } catch (err) {
       console.error(err.message);
       res.status(500).send("Server error");
@@ -59,11 +59,9 @@ router.delete("/cases/:id", isAuthenticated, isAdmin, async (req, res) => {
             id: req.params.id
          }
       });
-
       if (deletedCase === 0) {
          return res.status(404).json({ message: "Case not found" });
       }
-
       res.json({ message: "Кейс удален" });
    } catch (err) {
       console.error(err.message);
@@ -76,7 +74,7 @@ router.post("/items", isAuthenticated, isAdmin, async (req, res) => {
 
    try {
       // Создание нового элемента с использованием Sequelize
-      const newItem = await Item.create({ name, description, rarity, image });
+      const newItem = await Item.create({ name, description, rarity, image, });
 
       // Возвращаем созданный элемент
       res.status(201).json(newItem);
@@ -85,7 +83,6 @@ router.post("/items", isAuthenticated, isAdmin, async (req, res) => {
       res.status(500).send("Server error");
    }
 });
-
 
 //Изменить предмет кейса
 router.put('/items/:id', isAuthenticated, isAdmin, async (req, res) => {
