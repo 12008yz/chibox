@@ -26,6 +26,11 @@ router.post(
       if (!errors.isEmpty()) {
          return res.status(400).json({ errors: errors.array() });
       }
+      // Функция для получения изображения по умолчанию
+      const getRandomPlaceholderImage = () => {
+         return 'https://example.com/default-profile-picture.png';
+      };
+
 
       const { email, password, username, profilePicture } = req.body;
 
