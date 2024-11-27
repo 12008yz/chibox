@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const Item = require('../models/Item');
+const Item = require('../models/Item')
 
 const baseChances = {
    "1": { "1": 0.5, "2": 0.2, "3": 0.1, "4": 0.05, "5": 0.002 },
@@ -24,6 +24,7 @@ const calculateSuccessRate = (selectedItems, targetRarity) => {
 
    return totalChance;
 };
+
 
 const upgradeItem = async (userId, itemId, targetRarity) => {
    try {
