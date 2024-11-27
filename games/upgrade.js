@@ -38,7 +38,7 @@ const upgradeItem = async (userId, itemId, targetRarity) => {
       // Проверка, достаточно ли средств у пользователя для улучшения
       const upgradeCost = 100; // Определите стоимость улучшения
       if (user.walletBalance < upgradeCost) {
-         throw new Error("Insufficient funds for upgrade");
+         throw new Error("Insufficient funds for upgrade")
       }
 
       const successRate = calculateSuccessRate([item], targetRarity);
