@@ -165,7 +165,7 @@ module.exports = (io) => {
     try {
       const { betAmount } = req.body;
 
-      const result = await SlotGameController.spin(user._id, betAmount, io);
+      const result = await SlotGameController.spin(user.id, betAmount, io);
       res.json(result);
     } catch (error) {
       console.error(error);

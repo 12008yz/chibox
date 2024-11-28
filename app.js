@@ -41,14 +41,14 @@ if (!process.env.JWT_SECRET || !process.env.DATABASE_URL || !process.env.PORT) {
   process.exit(1);
 }
 
-// // Синхронизация базы данных
-// sequelize.sync()
-//   .then(() => {
-//     console.log('База данных и таблицы успешно синхронизированы!');
-//   })
-//   .catch((error) => {
-//     console.error('Ошибка при синхронизации базы данных:', error);
-//   });
+// Синхронизация базы данных
+sequelize.sync()
+  .then(() => {
+    console.log('База данных и таблицы успешно синхронизированы!');
+  })
+  .catch((error) => {
+    console.error('Ошибка при синхронизации базы данных:', error);
+  });
 
 // Middleware
 app.use(express.json());
