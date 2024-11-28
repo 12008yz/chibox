@@ -8,7 +8,7 @@ const authMiddleware = require('../middleware/authMiddleware')
 const User = require('../models/User');
 const Notification = require('../models/Notification');
 const Item = require('../models/Item');
-const getRandomPlaceholderImage = require('../utils/placeholderImages')
+const getRandomPlaceholderImage = require('../utils/placeholderImages');
 
 
 
@@ -26,11 +26,6 @@ router.post(
       if (!errors.isEmpty()) {
          return res.status(400).json({ errors: errors.array() });
       }
-      // Функция для получения изображения по умолчанию
-      const getRandomPlaceholderImage = () => {
-         return 'https://example.com/default-profile-picture.png';
-      };
-
 
       const { email, password, username, profilePicture } = req.body;
 
@@ -54,7 +49,7 @@ router.post(
             username,
             email,
             password: hashedPassword,
-            profilePicture: profilePicture || getRandomPlaceholderImage(), // Использование изображения по умолчанию
+            profilePicture: getRandomPlaceholderImage(),
             isAdmin: false
          });
 
