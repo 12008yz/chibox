@@ -2,6 +2,7 @@ const SlotGame = require('../models/Slot');
 const User = require('../models/User');
 const updateLevel = require("../utils/updateLevel");
 const updateUserWinnings = require("../utils/updateUserWinnings");
+const upgradeItems = require("../games/upgrade");
 
 class SlotGameController {
     static async spin(userId, betAmount, io) {
@@ -11,7 +12,11 @@ class SlotGameController {
         }
 
         // Проверка баланса пользователя
-        const player = await User.findById(userId).select("-password -email -isAdmin -nextBonus -inventory");
+        const player = await User.findByPk(userId, {
+         attributes: {
+            exclude: ['password', 'email','isAdmin', 'nextBonus', 'inventory']
+         }
+        });
         if (!player || player.walletBalance < betAmount) {
             throw new Error("Insufficient balance");
         }
@@ -33,7 +38,16 @@ class SlotGameController {
         }
 
         // Расчет общего выигрыша
-        const totalPayout = this.calculateTotalPayout(winResults, betAmount);
+        const totalPayout = calculateTotalPayout(winResults, betAmount);
+
+        function calculateTotalPayout(winResults) {
+         let totalPayout = 0;
+         if (winResults.length > 0) {
+             const totalWins = winResults.reduce((total, win) => total + win.payout, 0);
+             totalPayout = totalWins * betAmount;
+         }
+         return totalPayout;
+     }
 
         // Обновление баланса игрока
         if (winResults.length > 0) {

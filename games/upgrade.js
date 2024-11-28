@@ -26,7 +26,7 @@ const calculateSuccessRate = (selectedItems, targetRarity) => {
 };
 
 
-const upgradeItem = async (userId, itemId, targetRarity) => {
+const upgradeItems = async (userId, itemId, targetRarity) => {
    try {
       const user = await User.findByPk(userId);
       const item = await Item.findByPk(itemId);
@@ -61,4 +61,4 @@ const upgradeItem = async (userId, itemId, targetRarity) => {
    }
 };
 
-module.exports = upgradeItem;
+module.exports = upgradeItems;
