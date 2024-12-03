@@ -11,8 +11,6 @@ const Item = require('../models/Item');
 const getRandomPlaceholderImage = require('../utils/placeholderImages');
 
 
-
-
 // Регистрация
 router.post(
    '/register',
@@ -53,7 +51,7 @@ router.post(
             isAdmin: false
          });
 
-         res.status(201).json({ message: 'Пользователь успешно зарегистрирован!', newUser });
+         res.status(201).json({ message: 'Пользователь успешно зарегистрирован!', id: newUser.id });
       } catch (error) {
          console.error(error);
          res.status(500).json({ message: 'Ошибка при регистрации.' });

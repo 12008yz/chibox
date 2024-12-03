@@ -7,7 +7,7 @@ require('dotenv').config();
 const http = require('http');
 const socketIO = require('socket.io');
 const cronJobs = require('./tasks/cronJobs');
-const checkApiKey = require('./middleware/checkApiKey');
+// const checkApiKey = require('./middleware/checkApiKey');
 const rateLimit = require('express-rate-limit');
 const { sequelize } = require('./models');
 
@@ -34,6 +34,7 @@ const userRoutes = require("./routes/userRoutes");
 const caseRoutes = require("./routes/caseRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const gamesRoutes = require("./routes/gamesRoutes")(io)
+const itemRoutes = require("./routes/itemRoutes")
 
 // Проверка переменных окружения
 if (!process.env.JWT_SECRET || !process.env.DATABASE_URL || !process.env.PORT) {
@@ -42,13 +43,13 @@ if (!process.env.JWT_SECRET || !process.env.DATABASE_URL || !process.env.PORT) {
 }
 
 // Синхронизация базы данных
-sequelize.sync()
-  .then(() => {
-    console.log('База данных и таблицы успешно синхронизированы!');
-  })
-  .catch((error) => {
-    console.error('Ошибка при синхронизации базы данных:', error);
-  });
+// sequelize.sync({force: true})
+//   .then(() => {
+//     console.log('База данных и таблицы успешно синхронизированы!');
+//   })
+//   .catch((error) => {
+//     console.error('Ошибка при синхронизации базы данных:', error);
+//   });
 
 // Middleware
 app.use(express.json());
@@ -56,7 +57,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(logger('dev'));
 
-app.use(checkApiKey); // Middleware для проверки API-ключа
+// app.use(checkApiKey); // Middleware для проверки API-ключа
 
 // Ограничение количества запросов
 const limiter = rateLimit({
@@ -70,6 +71,7 @@ app.use('/admin', adminRoutes);
 app.use('/users', userRoutes);
 app.use('/case', caseRoutes);
 app.use('/game', gamesRoutes);
+app.use('/item', itemRoutes);
 
 // Запуск cronJobs
 cronJobs.startCronJobs(io);
@@ -104,9 +106,11 @@ io.on('connection', (socket) => {
 });
 
 // Запуск сервера
-server.listen(PORT, () => {
-  console.log(`Сервер запущен на http://localhost:${PORT}`);
-});
-
+if (require.main === module) {
+  const server = http.createServer(app);
+  server.listen(PORT, () => {
+      console.log(`Сервер запущен на http://localhost:${PORT}`);
+  });
+}
 // Экспорт приложения
 module.exports = app;
