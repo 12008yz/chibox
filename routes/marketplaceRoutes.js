@@ -16,7 +16,7 @@ const Notification = require("../models/Notification");
 module.exports = (io) => {
   // Обрабатываем POST запрос на создание нового объявления в маркетплейсе
   router.post("/", isAuthenticated, async (req, res) => {
-    const { item: uniqueId, price } = req.body;
+    const { id, price } = req.body;
 
     // Проверка цены
     if (isNaN(price) || price < 1 || price > 1000000) {
@@ -24,7 +24,6 @@ module.exports = (io) => {
     }
 
     try {
-      // Получение пользователя
       const user = await User.findByPk(req.user.id);
       if (!user || user.level < 5) {
         return res
@@ -33,17 +32,13 @@ module.exports = (io) => {
       }
 
       // Проверка наличия предмета в инвентаре
-      const inventoryItem = user.inventory.find(
-        (item) => item.uniqueId === uniqueId
-      );
+      const inventoryItem = user.inventory.find((item) => item.id === id);
       if (!inventoryItem) {
         return res.status(404).json({ message: "Item not found in inventory" });
       }
 
       // Удаление предмета из инвентаря
-      user.inventory = user.inventory.filter(
-        (item) => item.uniqueId !== uniqueId
-      );
+      user.inventory = user.inventory.filter((item) => item.id !== id);
       await user.save();
 
       // Получение оригинального предмета
@@ -55,12 +50,11 @@ module.exports = (io) => {
       // Создание нового предмета на маркетплейсе
       const marketplaceItem = await Marketplace.create({
         sellerId: user.id,
-        itemId: itemDocument.id,
+        itemId: itemDocument.id, // Используйте itemId
         price,
         itemName: itemDocument.name,
         itemImage: itemDocument.image,
         rarity: itemDocument.rarity,
-        uniqueId: inventoryItem.uniqueId,
       });
 
       res.status(201).json(marketplaceItem);

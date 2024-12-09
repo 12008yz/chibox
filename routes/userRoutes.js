@@ -51,7 +51,10 @@ router.post(
         profilePicture: getRandomPlaceholderImage(),
         isAdmin: false,
       });
-
+      const payload = { userId: user.id };
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: "1h",
+      });
       res.status(201).json({
         message: "Пользователь успешно зарегистрирован!",
         id: newUser.id,
@@ -148,35 +151,20 @@ router.get(
 
 router.get("/me", authMiddleware.isAuthenticated, async (req, res) => {
   try {
-    const {
-      id: id,
-      username,
-      profilePicture,
-      xp,
-      level,
-      walletBalance,
-      nextBonus,
-    } = req.user;
+    const user = await User.findByPk(req.user.id, {
+      attributes: { exclude: ["password"] }, // Исключаем пароль
+    });
 
-    const unreadNotifications = await Notification.findAll({
-      where: {
-        receiverId: req.user.id,
-        read: false,
-      },
-    });
-    const hasUnreadNotifications = unreadNotifications.length > 0;
-    res.json({
-      id,
-      username,
-      profilePicture,
-      xp,
-      level,
-      walletBalance,
-      nextBonus,
-      hasUnreadNotifications,
-    });
+    if (!user) {
+      return res.status(404).json({ message: "Пользователь не найден" });
+    }
+
+    const userData = user.get({ plain: true }); // Преобразуем в обычный объект
+    console.log("Данные пользователя:", userData);
+
+    res.json(userData); // Возвращаем данные
   } catch (err) {
-    console.error(err.message);
+    console.error("Ошибка при получении данных пользователя:", err.message);
     res.status(500).send("Ошибка сервера");
   }
 });
@@ -240,27 +228,39 @@ router.get("/ranking", authMiddleware.isAuthenticated, async (req, res) => {
   }
 });
 
-// Добавить предмет в инвентарь
-
+// Добавить предмет в инвентарь //TODO Ебанный инвентарь
 router.post("/inventory", authMiddleware.isAuthenticated, async (req, res) => {
   try {
-    const { itemId } = req.body;
+    const { id } = req.body; // ID предмета, который нужно добавить
     const user = await User.findByPk(req.user.id);
 
     if (!user) {
       return res.status(404).json({ message: "Пользователь не найден" });
     }
 
-    // Добавить предмет в инвентарь
-    user.inventory.push(itemId);
+    // Получите предмет из базы данных
+    const item = await Item.findByPk(id);
 
-    // Сохранить изменения в базе данных
-    await user.save(); // Не забудьте сохранить изменения
+    if (!item) {
+      return res.status(404).json({ message: "Предмет не найден" });
+    }
 
-    // Отправить успешный ответ
+    // Добавить предмет в инвентарь с использованием оператора распространения
+    user.inventory = [
+      ...user.inventory,
+      {
+        id: item.id,
+        name: item.name,
+        image: item.image,
+        rarity: item.rarity,
+      },
+    ];
+
+    await user.save(); // Сохранение изменений в базе данных
+
     res.status(200).json({ message: "Предмет успешно добавлен в инвентарь" });
   } catch (err) {
-    console.error(err.message);
+    console.error("Ошибка при добавлении предмета в инвентарь:", err.message);
     res.status(500).json({ message: "Ошибка сервера" });
   }
 });
@@ -445,7 +445,7 @@ router.get("/:id", async (req, res) => {
     // Получение пользователя, исключая поля inventory и password
     const user = await User.findOne({
       where: { id: userId },
-      attributes: { exclude: ["inventory", "password"] },
+      attributes: { exclude: ["password"] },
     });
 
     if (!user) {

@@ -46,14 +46,14 @@ if (!process.env.JWT_SECRET || !process.env.DATABASE_URL || !process.env.PORT) {
 }
 
 // Синхронизация базы данных
-sequelize
-  .sync({ alter: true })
-  .then(() => {
-    console.log("База данных и таблицы успешно синхронизированы!");
-  })
-  .catch((error) => {
-    console.error("Ошибка при синхронизации базы данных:", error);
-  });
+// sequelize
+//   .sync({ alter: true })
+//   .then(() => {
+//     console.log("База данных и таблицы успешно синхронизированы!");
+//   })
+//   .catch((error) => {
+//     console.error("Ошибка при синхронизации базы данных:", error);
+//   });
 
 // Middleware
 app.use(express.json());
