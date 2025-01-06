@@ -13,7 +13,8 @@ const { sequelize } = require("./models");
 
 const PORT = process.env.PORT || 3000;
 const app = express();
-
+app.set('view engine', 'ejs'); // Указываем, что используем ejs
+app.set('views', './views');
 // Настройка CORS
 const corsOptions = {
   origin: true, // Разрешить всем источникам
@@ -45,15 +46,6 @@ if (!process.env.JWT_SECRET || !process.env.DATABASE_URL || !process.env.PORT) {
   process.exit(1);
 }
 
-// Синхронизация базы данных
-// sequelize
-//   .sync({ alter: true })
-//   .then(() => {
-//     console.log("База данных и таблицы успешно синхронизированы!");
-//   })
-//   .catch((error) => {
-//     console.error("Ошибка при синхронизации базы данных:", error);
-//   });
 
 // Middleware
 app.use(express.json());
@@ -77,6 +69,8 @@ app.use("/case", caseRoutes);
 app.use("/game", gamesRoutes);
 app.use("/item", itemRoutes);
 app.use("/marketplace", marketplaceRoutes);
+
+// Проверка подключения к базе данных
 
 // Запуск cronJobs
 cronJobs.startCronJobs(io);

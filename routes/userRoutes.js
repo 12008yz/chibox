@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Op } = require("sequelize");
 const { check, validationResult } = require("express-validator");
@@ -9,6 +8,9 @@ const User = require("../models/User");
 const Notification = require("../models/Notification");
 const Item = require("../models/Item");
 const getRandomPlaceholderImage = require("../utils/placeholderImages");
+const bcrypt = require("bcryptjs");
+
+
 
 // Регистрация
 router.post(
@@ -51,13 +53,13 @@ router.post(
         profilePicture: getRandomPlaceholderImage(),
         isAdmin: false,
       });
-      const payload = { userId: user.id };
+      const payload = { userId: newUser.id };
       const token = jwt.sign(payload, process.env.JWT_SECRET, {
         expiresIn: "1h",
       });
       res.status(201).json({
         message: "Пользователь успешно зарегистрирован!",
-        id: newUser.id,
+        token,
       });
     } catch (error) {
       console.error(error);
@@ -69,14 +71,13 @@ router.post(
 // Логин
 router.post(
   "/login",
+
   [
-    check(
-      "email",
-      "Пожалуйста, укажите действительный адрес электронной почты"
-    ).isEmail(),
-    check("password", "Требуется ввести пароль").exists(),
+    check("email", "Please include a valid email").isEmail(),
+    check("password", "Password is required").exists(),
   ],
   async (req, res) => {
+    // Handle validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -85,30 +86,43 @@ router.post(
     const { email, password } = req.body;
 
     try {
-      const user = await User.findOne({ where: { email } });
+      // Check if user exists
+      const user = await User.findOne({
+        where: {
+          email: req.body.email
+        }
+      });
       if (!user) {
-        return res.status(400).json({ message: "Email не найден" });
+        return res.status(400).json({ message: "Email not found" });
       }
 
-      // Сравнение введенного пароля с хешированным паролем
-      const isMatch = await bcrypt.compare(password, user.password);
+      // Compare passwords
+
+      const originalPassword = req.body.password;
+
+      const isMatch = await bcrypt.compare(originalPassword, user.password);
       if (!isMatch) {
-        return res.status(400).json({ message: "Неверный пароль" });
+        return res.status(400).json({ message: "Invalid credentials" });
       }
 
-      // Генерация JWT
+      // Generate and send JWT
       const payload = { userId: user.id };
-      try {
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
-        res.json({ message: "Успешный вход!", token });
-      } catch (error) {
-        return console.error("Error signing token:", error);
-      }
-    } catch (error) {
-      console.error(error);
+      jwt.sign(
+        payload,
+        process.env.JWT_SECRET,
+        { expiresIn: "30d" },
+        (err, token) => {
+          if (err) throw err;
+          res.json({ token });
+        }
+      );
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send("Server error");
     }
   }
 );
+
 
 // Получение уведомлений
 router.get(
