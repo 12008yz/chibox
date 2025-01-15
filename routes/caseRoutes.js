@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 router.post('/', isAuthenticated, isAdmin, async (req, res) => {
    const newCase = new Case({
       title: req.body.title,
-      description: req.body.description,
+      image: req.body.image,
       price: req.body.price,
       items: req.body.items
    });
