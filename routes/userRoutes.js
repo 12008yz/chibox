@@ -442,7 +442,7 @@ router.put(
 
       await user.save();
 
-      res.json({ message: "Profile picture updated" });
+      res.json({ success: true, message: "Profile picture updated" });
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: "Server error" });
