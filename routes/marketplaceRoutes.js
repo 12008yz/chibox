@@ -211,7 +211,7 @@ module.exports = (io) => {
       // Добавление предмета обратно в инвентарь пользователя
       const user = await User.findByPk(req.user.id); // Используйте findByPk для поиска пользователя
       user.inventory.push({
-        _id: item.item, // Предполагается, что item.item - это идентификатор предмета
+        id: item.item, // Предполагается, что item.item - это идентификатор предмета
         name: item.itemName,
         image: item.itemImage,
         rarity: item.rarity,

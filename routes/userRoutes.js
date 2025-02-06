@@ -7,10 +7,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 const Item = require("../models/Item");
-const getRandomPlaceholderImage = require("../utils/placeholderImages");
 const bcrypt = require("bcryptjs");
-
-
 
 // Регистрация
 router.post(
@@ -21,15 +18,16 @@ router.post(
     check("username", "Введите имя").not().isEmpty(),
   ],
   async (req, res) => {
+    // Обработка ошибок валидации
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password, username, profilePicture } = req.body;
+    const { email, password, username } = req.body;
 
     try {
-      // Проверка на наличие пользователя с таким же email или username
+      // Проверка наличия пользователя с таким же email или username
       const existingUser = await User.findOne({
         where: {
           [Op.or]: [{ email }, { username }],
@@ -42,28 +40,29 @@ router.post(
         });
       }
 
-      // Хеширование пароля
-      const hashedPassword = await bcrypt.hash(password, 10);
-
       // Создание нового пользователя
+      const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = await User.create({
         username,
         email,
         password: hashedPassword,
-        profilePicture: getRandomPlaceholderImage(),
-        isAdmin: false,
+        isAdmin: true,
       });
+
+      // Генерация и отправка JWT
       const payload = { userId: newUser.id };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: "1h",
-      });
-      res.status(201).json({
-        message: "Пользователь успешно зарегистрирован!",
-        token,
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Ошибка при регистрации." });
+      jwt.sign(
+        payload,
+        process.env.JWT_SECRET,
+        { expiresIn: "30d" },
+        (err, token) => {
+          if (err) throw err;
+          res.json({ token });
+        }
+      );
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).json({ message: "Ошибка сервера" });
     }
   }
 );
@@ -89,8 +88,8 @@ router.post(
       // Check if user exists
       const user = await User.findOne({
         where: {
-          email: req.body.email
-        }
+          email: req.body.email,
+        },
       });
       if (!user) {
         return res.status(400).json({ message: "Email not found" });
@@ -113,7 +112,7 @@ router.post(
         { expiresIn: "30d" },
         (err, token) => {
           if (err) throw err;
-          res.json({ token });
+          res.json({ token, user });
         }
       );
     } catch (err) {
@@ -122,7 +121,6 @@ router.post(
     }
   }
 );
-
 
 // Получение уведомлений
 router.get(
@@ -165,21 +163,37 @@ router.get(
 
 router.get("/me", authMiddleware.isAuthenticated, async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ["password"] }, // Исключаем пароль
+    const {
+      id,
+      username,
+      profilePicture,
+      xp,
+      level,
+      walletBalance,
+      nextBonus,
+      fixedItem,
+    } = req.user;
+
+    // Проверяем в модели Notification, есть ли непрочитанные уведомления для пользователя
+    const unreadNotifications = await Notification.findAll({
+      where: { receiverId: req.user.id, read: false },
     });
+    const hasUnreadNotifications = unreadNotifications.length > 0;
 
-    if (!user) {
-      return res.status(404).json({ message: "Пользователь не найден" });
-    }
-
-    const userData = user.get({ plain: true }); // Преобразуем в обычный объект
-    console.log("Данные пользователя:", userData);
-
-    res.json(userData); // Возвращаем данные
+    res.json({
+      id,
+      username,
+      profilePicture,
+      xp,
+      level,
+      walletBalance,
+      nextBonus,
+      fixedItem,
+      hasUnreadNotifications,
+    });
   } catch (err) {
-    console.error("Ошибка при получении данных пользователя:", err.message);
-    res.status(500).send("Ошибка сервера");
+    console.error(err.message);
+    res.status(500).send("Server error");
   }
 });
 
@@ -242,7 +256,7 @@ router.get("/ranking", authMiddleware.isAuthenticated, async (req, res) => {
   }
 });
 
-// Добавить предмет в инвентарь //TODO Ебанный инвентарь
+// Добавить предмет в инвентарь //
 router.post("/inventory", authMiddleware.isAuthenticated, async (req, res) => {
   try {
     const { id } = req.body; // ID предмета, который нужно добавить
@@ -393,7 +407,7 @@ router.post("/claimBonus", authMiddleware.isAuthenticated, async (req, res) => {
       const currentBonus = user.bonusAmount; // Получаем текущую сумму бонуса
       user.walletBalance += currentBonus; // Добавляем бонус к кошельку
 
-      user.nextBonus = new Date(currentTime.getTime() + 8 * 60000); // Устанавливаем время следующего бонуса на 8 минут позже
+      user.nextBonus = new Date(currentTime.getTime() + 1 * 60000); // Устанавливаем время следующего бонуса на 8 минут позже
       // Устанавливаем сумму бонуса в 200 * 10% от текущего уровня пользователя
       user.bonusAmount = Math.floor(200 * (1 + 0.1 * user.level));
 
