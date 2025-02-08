@@ -68,7 +68,7 @@ const refreshToken = async (req, res) => {
     console.log("Refresh token не найден");
     return res.status(401).json({ message: "Refresh token не предоставлен" });
   }
-
+  
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
     console.log("Декодированный refresh token:", decoded);

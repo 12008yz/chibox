@@ -14,12 +14,28 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/:id", async (req, res) => {
+  try {
+    const caseId = req.params.id;
+    const caseData = await Case.findByPk(caseId);
+
+    if (!caseData) {
+      return res.status(404).json({ message: "Кейс не найден" });
+    }
+
+    res.json(caseData);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.post("/", isAuthenticated, isAdmin, async (req, res) => {
   const newCase = new Case({
     title: req.body.title,
     description: req.body.description,
     price: req.body.price,
     items: req.body.items,
+    image: req.body.image || null, // Сохранение URL изображения
   });
 
   try {

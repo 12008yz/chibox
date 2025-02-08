@@ -69,7 +69,7 @@ app.use("/case", caseRoutes);
 app.use("/game", gamesRoutes);
 app.use("/item", itemRoutes);
 app.use("/marketplace", marketplaceRoutes);
-
+// app.use("/images", express.static(path.join(__dirname, "public/images")));
 // Проверка подключения к базе данных
 
 // Запуск cronJobs

@@ -19,10 +19,14 @@ router.get("/users", isAuthenticated, isAdmin, async (req, res) => {
 // добавить кейс
 
 router.post("/cases", isAuthenticated, isAdmin, async (req, res) => {
-  const { title, description, price, items } = req.body;
-
-  const newCase = new Case({ title, description, price, items });
-
+  const { title, description, price, items, image } = req.body;
+  console.log("Image URL:", image);
+  console.log("Request Body:", req.body);
+  const newCase = new Case({ title, description, price, items,image });
+  if (!image) {
+    return res.status(400).json({ error: "Image URL is required" });
+}
+console.log("Image URL:", image);
   try {
     const savedCase = await newCase.save();
     res.status(201).json(savedCase);
