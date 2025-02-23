@@ -99,57 +99,14 @@ module.exports = (io) => {
       }
       if (rarity) itemFilter.rarity = rarity;
 
-      const items = await Item.findAll({
-        where: itemFilter,
-      });
-      const totalItemsCount = await Item.count({
-        where: itemFilter,
-      });
-
-      const itemIds = items.map((item) => item.id);
       const marketplaceData = await Marketplace.findAll({
-        attributes: [
-          "item",
-          [sequelize.fn("MIN", sequelize.col("price")), "cheapestPrice"],
-          [sequelize.fn("COUNT", sequelize.col("*")), "totalListings"],
-          [sequelize.fn("MAX", sequelize.col("createdAt")), "mostRecent"],
-        ],
-        where: {
-          item: {
-            [Op.in]: itemIds,
-          },
-        },
-        group: ["item"],
+        where: itemFilter,
+      });
+      const totalItemsCount = await Marketplace.count({
+        where: itemFilter,
       });
 
-      const itemsWithMarketplaceData = items.map((item) => {
-        const marketplaceItem = marketplaceData.find(
-          (md) => md.id.toString() === item.id.toString()
-        );
-        return {
-          ...item.get({ plain: true }), // или item.toJSON()
-          cheapestPrice: marketplaceItem ? marketplaceItem.cheapestPrice : null,
-          totalListings: marketplaceItem ? marketplaceItem.totalListings : 0,
-          mostRecent: marketplaceItem
-            ? marketplaceItem.mostRecent
-            : new Date(0),
-        };
-      });
-
-      const itemsWithListings = itemsWithMarketplaceData.filter(
-        (item) => item.totalListings > 0
-      );
-      const itemsWithoutListings = itemsWithMarketplaceData.filter(
-        (item) => item.totalListings === 0
-      );
-
-      itemsWithListings.sort((a, b) => {
-        return new Date(b.mostRecent) - new Date(a.mostRecent);
-      });
-
-      const sortedItems = [...itemsWithListings, ...itemsWithoutListings];
-
-      const paginatedItems = sortedItems.slice(skip, skip + limit);
+      const paginatedItems = marketplaceData.slice(skip, skip + limit);
 
       res.json({
         totalPages: Math.ceil(totalItemsCount / limit),
