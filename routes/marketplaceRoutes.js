@@ -119,21 +119,26 @@ module.exports = (io) => {
     }
   });
 
-  router.get("/item/:itemId", async (req, res) => {
-    const { itemId } = req.params;
+  // Получение 1 предмета в маркетплейсе
+  router.get("/item/:id", async (req, res) => {
+    const { id } = req.params;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 30;
     const skip = (page - 1) * limit;
 
     try {
-      // Подсчет общего количества записей для данного itemId
+      // Подсчет общего количества записей для данного id
+      console.log(`[LOG] Запрос на получение предмета с id=${id}`);
+
       const total = await Marketplace.count({
-        where: { item: itemId },
+        where: { id: id },
       });
 
-      // Получение всех записей для данного itemId с учетом пагинации
+      console.log(`[LOG] Общее количество записей для id=${id}: ${total}`);
+
+      // Получение всех записей для данного id с учетом пагинации
       const items = await Marketplace.findAll({
-        where: { item: itemId },
+        where: { id: id },
         include: [
           {
             model: User,
@@ -148,6 +153,8 @@ module.exports = (io) => {
         limit: limit, // Ограничение на количество записей
       });
 
+      console.log(`[LOG] Найдено записей для id=${id}: ${items.length}`);
+
       // Возвращаем ответ с пагинацией
       res.json({
         totalPages: Math.ceil(total / limit),
@@ -160,12 +167,13 @@ module.exports = (io) => {
     }
   });
 
+  // Удаление 1 предмета в маркетплейсе
   router.delete("/:id", isAuthenticated, async (req, res) => {
     try {
-      // Поиск элемента в маркетплейсе по uniqueId и sellerId
+      // Поиск элемента в маркетплейсе по id и sellerId
       const item = await Marketplace.findOne({
         where: {
-          uniqueId: req.params.id,
+          id: req.params.id,
           sellerId: req.user.id, // Используйте req.user.id вместо req.user._id
         },
       });
@@ -182,14 +190,14 @@ module.exports = (io) => {
       // Удаление элемента из маркетплейса
       await Marketplace.destroy({
         where: {
-          uniqueId: req.params.id,
+          id: req.params.id,
         },
       });
 
       // Добавление предмета обратно в инвентарь пользователя
       const user = await User.findByPk(req.user.id); // Используйте findByPk для поиска пользователя
       user.inventory.push({
-        id: item.item, // Предполагается, что item.item - это идентификатор предмета
+        id: item.itemId, // Используем itemId вместо item
         name: item.itemName,
         image: item.itemImage,
         rarity: item.rarity,
@@ -231,7 +239,7 @@ module.exports = (io) => {
       // Обновляем баланс пользователя и добавляем предмет в инвентарь
       user.walletBalance -= item.price;
       user.inventory.push({
-        id: item.item,
+        id: item.itemId, // Используем itemId вместо item
         name: item.itemName,
         image: item.itemImage,
         rarity: item.rarity,
@@ -259,6 +267,7 @@ module.exports = (io) => {
           type: "message",
           title: "Item Sold",
           content: `Your ${item.itemName} has been sold for K₽${item.price}`,
+          message: `Your ${item.itemName} has been sold for K₽${item.price}`,
         },
         { transaction }
       );
