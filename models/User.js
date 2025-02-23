@@ -20,7 +20,7 @@ const User = sequelize.define("User", {
     defaultValue: 200,
   },
   inventory: {
-    type: DataTypes.JSON,
+    type: DataTypes.JSONB,
     defaultValue: [],
   },
   fixedItem: {

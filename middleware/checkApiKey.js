@@ -1,11 +1,11 @@
-const checkApiKey = (req, res, next) => {
-   const apiKey = req.headers['x-api-key'];
+// const checkApiKey = (req, res, next) => {
+//    const apiKey = req.headers['x-api-key'];
 
-   if (apiKey === process.env.API_KEY) {
-      next();
-   } else {
-      res.status(403).json({ error: 'Запрещено' });
-   }
-};
+//    if (apiKey === process.env.API_KEY) {
+//       next();
+//    } else {
+//       res.status(403).json({ error: 'Запрещено' });
+//    }
+// };
 
-module.exports = checkApiKey;
+// module.exports = checkApiKey;

@@ -16,53 +16,74 @@ const Notification = require("../models/Notification");
 module.exports = (io) => {
   // Обрабатываем POST запрос на создание нового объявления в маркетплейсе
   router.post("/", isAuthenticated, async (req, res) => {
-    const { id, price } = req.body;
+    const { uniqueId, price } = req.body;
+
+    console.log(
+      `[LOG] Запрос на продажу предмета: uniqueId=${uniqueId}, price=${price}`
+    );
 
     // Проверка цены
     if (isNaN(price) || price < 1 || price > 1000000) {
+      console.log(`[LOG] Некорректная цена: ${price}`);
       return res.status(400).json({ message: "Invalid price" });
     }
 
     try {
       const user = await User.findByPk(req.user.id);
       if (!user || user.level < 5) {
+        console.log(
+          `[LOG] Пользователь не найден или уровень ниже 5: userId=${req.user.id}, level=${user?.level}`
+        );
         return res
           .status(400)
           .json({ message: "You must be at least level 5 to sell items" });
       }
 
+      console.log(`[LOG] Инвентарь пользователя:`, user.inventory);
+
       // Проверка наличия предмета в инвентаре
-      const inventoryItem = user.inventory.find((item) => item.id === id);
+      const inventoryItem = user.inventory.find(
+        (item) => item.uniqueId === uniqueId
+      );
       if (!inventoryItem) {
+        console.log(
+          `[LOG] Предмет не найден в инвентаре: uniqueId=${uniqueId}`
+        );
         return res.status(404).json({ message: "Item not found in inventory" });
       }
 
-      // Удаление предмета из инвентаря
-      user.inventory = user.inventory.filter((item) => item.id !== id);
-      await user.save();
+      console.log(`[LOG] Найден предмет в инвентаре:`, inventoryItem);
 
-      // Получение оригинального предмета
-      const itemDocument = await Item.findByPk(inventoryItem.id);
-      if (!itemDocument) {
-        return res.status(404).json({ message: "Item not found" });
-      }
+      // Удаление предмета из инвентаря
+      user.inventory = user.inventory.filter(
+        (item) => item.uniqueId !== uniqueId
+      );
+      await user.save();
+      console.log(`[LOG] Предмет удален из инвентаря: uniqueId=${uniqueId}`);
 
       // Создание нового предмета на маркетплейсе
       const marketplaceItem = await Marketplace.create({
         sellerId: user.id,
-        itemId: itemDocument.id, // Используйте itemId
+        itemId: inventoryItem.uniqueId,
         price,
-        itemName: itemDocument.name,
-        itemImage: itemDocument.image,
-        rarity: itemDocument.rarity,
+        itemName: inventoryItem.name,
+        itemImage: inventoryItem.image,
+        rarity: inventoryItem.rarity,
       });
+
+      console.log(
+        `[LOG] Предмет успешно добавлен на маркетплейс:`,
+        marketplaceItem
+      );
 
       res.status(201).json(marketplaceItem);
     } catch (error) {
-      console.error(error);
+      console.error(`[ERROR] Ошибка при продаже предмета:`, error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
+
+  // Получение всех предметов в маркетплейсе
   router.get("/", async (req, res) => {
     try {
       const page = Number(req.query.page) || 1;
