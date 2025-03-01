@@ -238,20 +238,24 @@ module.exports = (io) => {
 
       // Обновляем баланс пользователя и добавляем предмет в инвентарь
       user.walletBalance -= item.price;
-      user.inventory.push({
+      const newItem = {
         id: item.itemId, // Используем itemId вместо item
         name: item.itemName,
         image: item.itemImage,
         rarity: item.rarity,
         createdAt: item.createdAt,
         uniqueId: item.uniqueId,
-      });
+      };
+      user.inventory = [...user.inventory, newItem]; // Используем спред-оператор
       await user.save({ transaction });
 
+      // Добавляем деньги продавцу
       const seller = await User.findByPk(item.sellerId, { transaction });
       seller.walletBalance += item.price;
       await seller.save({ transaction });
+      console.log(`[LOG] Баланс продавца обновлен:`, seller.walletBalance);
 
+      // Удаляем предмет с маркетплейса
       await Marketplace.destroy({
         where: {
           id: req.params.id,

@@ -7,14 +7,14 @@ require("dotenv").config();
 const http = require("http");
 const socketIO = require("socket.io");
 const cronJobs = require("./tasks/cronJobs");
-// const checkApiKey = require('./middleware/checkApiKey');
 const rateLimit = require("express-rate-limit");
 const { sequelize } = require("./models");
 
 const PORT = process.env.PORT || 3000;
 const app = express();
-app.set('view engine', 'ejs'); // Указываем, что используем ejs
-app.set('views', './views');
+app.set("view engine", "ejs"); // Указываем, что используем ejs
+app.set("views", "./views");
+
 // Настройка CORS
 const corsOptions = {
   origin: true, // Разрешить всем источникам
@@ -46,14 +46,11 @@ if (!process.env.JWT_SECRET || !process.env.DATABASE_URL || !process.env.PORT) {
   process.exit(1);
 }
 
-
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(logger("dev"));
-
-// app.use(checkApiKey); // Middleware для проверки API-ключа
 
 // Ограничение количества запросов
 const limiter = rateLimit({
@@ -69,8 +66,6 @@ app.use("/case", caseRoutes);
 app.use("/game", gamesRoutes);
 app.use("/item", itemRoutes);
 app.use("/marketplace", marketplaceRoutes);
-// app.use("/images", express.static(path.join(__dirname, "public/images")));
-// Проверка подключения к базе данных
 
 // Запуск cronJobs
 cronJobs.startCronJobs(io);
@@ -82,11 +77,8 @@ app.use((req, res, next) => {
 
 // Обработка ошибок
 app.use((err, req, res, next) => {
-  // Установка локальных переменных для отображения ошибок
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
-
-  // Отправка ответа с ошибкой
   res.status(err.status || 500);
   res.render("error");
 });
@@ -95,6 +87,13 @@ app.use((err, req, res, next) => {
 let onlineUsers = 0;
 
 io.on("connection", (socket) => {
+  console.log("A user connected");
+
+  socket.on("testEvent", (data) => {
+    console.log("Received testEvent:", data);
+    socket.emit("responseEvent", { message: "Test event received!" });
+  });
+
   onlineUsers++;
   io.emit("onlineUsers", onlineUsers);
 
@@ -106,10 +105,10 @@ io.on("connection", (socket) => {
 
 // Запуск сервера
 if (require.main === module) {
-  const server = http.createServer(app);
   server.listen(PORT, () => {
     console.log(`Сервер запущен на http://localhost:${PORT}`);
   });
 }
+
 // Экспорт приложения
 module.exports = app;
