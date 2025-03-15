@@ -89,7 +89,7 @@ module.exports = (io) => {
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 30;
       const skip = (page - 1) * limit;
-      const { name, rarity, sortBy, order } = req.query;
+      const { name, rarity } = req.query;
 
       let itemFilter = {};
       if (name) {
@@ -122,22 +122,11 @@ module.exports = (io) => {
   // Получение 1 предмета в маркетплейсе
   router.get("/item/:id", async (req, res) => {
     const { id } = req.params;
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 30;
-    const skip = (page - 1) * limit;
 
     try {
-      // Подсчет общего количества записей для данного id
       console.log(`[LOG] Запрос на получение предмета с id=${id}`);
 
-      const total = await Marketplace.count({
-        where: { id: id },
-      });
-
-      console.log(`[LOG] Общее количество записей для id=${id}: ${total}`);
-
-      // Получение всех записей для данного id с учетом пагинации
-      const items = await Marketplace.findAll({
+      const item = await Marketplace.findOne({
         where: { id: id },
         include: [
           {
@@ -148,19 +137,13 @@ module.exports = (io) => {
             model: Item,
           },
         ],
-        order: [["price", "ASC"]], // Сортировка по цене
-        offset: skip, // Пропуск записей
-        limit: limit, // Ограничение на количество записей
       });
 
-      console.log(`[LOG] Найдено записей для id=${id}: ${items.length}`);
+      if (!item) {
+        return res.status(404).json({ message: "Item not found" });
+      }
 
-      // Возвращаем ответ с пагинацией
-      res.json({
-        totalPages: Math.ceil(total / limit),
-        currentPage: page,
-        items,
-      });
+      res.json(item);
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: "Ошибка при получении данных" });

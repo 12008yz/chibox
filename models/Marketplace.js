@@ -21,7 +21,7 @@ const Marketplace = sequelize.define("Marketplace", {
     allowNull: false,
   },
   itemImage: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT, // Изменено с STRING на TEXT
     allowNull: false,
   },
   rarity: {

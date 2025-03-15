@@ -22,8 +22,8 @@ User.belongsTo(SlotGame, { foreignKey: "id" });
 Marketplace.hasMany(Item, { foreignKey: "caseId" });
 Item.belongsTo(Marketplace, { foreignKey: "caseId" });
 
-User.hasMany(Item, { foreignKey: "itemId" });
-Item.belongsTo(User, { foreignKey: "itemId" });
+User.hasMany(Item, { foreignKey: "uniqueId" }); // Изменено с itemId на uniqueId
+Item.belongsTo(User, { foreignKey: "uniqueId" }); // Изменено с itemId на uniqueId
 
 Marketplace.hasMany(User, { foreignKey: "id" });
 User.belongsTo(Marketplace, { foreignKey: "id" });

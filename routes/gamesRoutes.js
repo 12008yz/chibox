@@ -6,7 +6,8 @@ const Case = require("../models/Case");
 const SlotGameController = require("../games/slot");
 const updateLevel = require("../utils/updateLevel");
 const { Item } = require("../models");
-const upgradeItems = require('../games/upgrade');
+const upgradeItems = require("../games/upgrade");
+const coinFlip = require("../games/coinFlip");
 
 // Массив редкостей
 const Rarities = [
@@ -49,12 +50,13 @@ function getRandomItemFromRarity(itemsByRarity, rarity) {
 
 function getWinningItem(caseData) {
   const itemsByRarity = groupItemsByRarity(caseData.items);
-  const winningsRarity = getRandomWeightedItem(Rarities, 'chance');
+  const winningsRarity = getRandomWeightedItem(Rarities, "chance");
   let winningsItem = getRandomItemFromRarity(itemsByRarity, winningsRarity.id);
 
   if (!winningsItem) {
     const existingRarities = Object.keys(itemsByRarity);
-    const randomExistingRarity = existingRarities[Math.floor(Math.random() * existingRarities.length)];
+    const randomExistingRarity =
+      existingRarities[Math.floor(Math.random() * existingRarities.length)];
     winningsItem = getRandomItemFromRarity(itemsByRarity, randomExistingRarity);
   }
   return winningsItem;
@@ -67,12 +69,12 @@ const addUniqueInfoToItem = (item) => {
     image: item.image,
     rarity: item.rarity,
     case: item.case,
-    uniqueId: require('uuid').v4(),
+    uniqueId: require("uuid").v4(),
   };
 };
 
 module.exports = (io) => {
-  router.post('/openCase/:id', isAuthenticated, async (req, res) => {
+  router.post("/openCase/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
       const user = req.user;
@@ -82,7 +84,7 @@ module.exports = (io) => {
       const caseData = await Case.findByPk(id, {
         include: {
           model: Item,
-        }
+        },
       });
 
       if (!caseData || !user) {
@@ -94,17 +96,23 @@ module.exports = (io) => {
       }
 
       if (!Number.isInteger(quantityToOpen)) {
-        return res.status(400).json({ message: "Quantity to open must be an integer" });
+        return res
+          .status(400)
+          .json({ message: "Quantity to open must be an integer" });
       }
       if (quantityToOpen > 5) {
-        return res.status(400).json({ message: "You can only open up to 5 cases at a time" });
+        return res
+          .status(400)
+          .json({ message: "You can only open up to 5 cases at a time" });
       }
 
       if (quantityToOpen < 1) {
-        return res.status(400).json({ message: "You need to open at least 1 case" });
+        return res
+          .status(400)
+          .json({ message: "You need to open at least 1 case" });
       }
 
-      if (user.walletBalance < (caseData.price * quantityToOpen)) {
+      if (user.walletBalance < caseData.price * quantityToOpen) {
         return res.status(400).json({ message: "Insufficient balance" });
       }
 
@@ -123,7 +131,7 @@ module.exports = (io) => {
       const winnerUser = {
         name: user.username,
         id: user.id,
-        profilePicture: user.profilePicture
+        profilePicture: user.profilePicture,
       };
 
       io.emit("caseOpened", {
@@ -138,15 +146,15 @@ module.exports = (io) => {
         xp: user.xp,
         level: user.level,
       };
-      io.to(user.id.toString()).emit('userDataUpdated', userDataPayload);
+      io.to(user.id.toString()).emit("userDataUpdated", userDataPayload);
     } catch (err) {
       console.error(err);
-      return res.status(500).json({ message: 'Ошибка сервера' });
+      return res.status(500).json({ message: "Ошибка сервера" });
     }
   });
 
   // Upgrade items
-  router.post('/upgrade', isAuthenticated, async (req, res) => {
+  router.post("/upgrade", isAuthenticated, async (req, res) => {
     const { selectedItemsIds, targetRarityId } = req.body;
     const user = req.user;
 
@@ -155,11 +163,11 @@ module.exports = (io) => {
       res.status(result.status).json(result);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: 'Ошибка при обновлении предметов' });
+      res.status(500).json({ message: "Ошибка при обновлении предметов" });
     }
   });
 
-  router.post('/slots', isAuthenticated, async (req, res) => {
+  router.post("/slots", isAuthenticated, async (req, res) => {
     const user = req.user;
 
     try {
@@ -170,6 +178,21 @@ module.exports = (io) => {
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Маршрут для игры "Орел и Решка"
+  router.post("/coinFlip", isAuthenticated, async (req, res) => {
+    try {
+      const { bet, choice } = req.body;
+      const user = req.user;
+
+      // Передача данных в функцию coinFlip
+      const result = await coinFlip(io)(user, bet, choice);
+      res.json(result);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Ошибка при обработке ставки" });
     }
   });
 

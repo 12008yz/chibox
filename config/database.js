@@ -1,9 +1,10 @@
 // config/database.js
+require('dotenv').config();
 const { Sequelize } = require("sequelize");
 
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: "postgres",
-  logging: false,
+  logging: console.log, // Включаем логирование
 });
 
 // Синхронизация моделей с базой данных

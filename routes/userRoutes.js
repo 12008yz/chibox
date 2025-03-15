@@ -495,62 +495,24 @@ const ITEMS_PER_PAGE = 18;
 router.get("/inventory/:userId", async (req, res) => {
   try {
     const { userId } = req.params; // Извлекаем userId из параметров
-    const { name, rarity, sortBy, order, caseId } = req.query; // Извлекаем параметры запроса
-    const page = parseInt(req.query.page) || 1; // Устанавливаем номер страницы
 
     // Получаем пользователя
     const user = await User.findByPk(userId);
     if (!user) {
-      return res.status(404).json({ message: "User  not found" });
+      return res.status(404).json({ message: "User not found" });
     }
 
-    // Начинаем формировать условия для выборки инвентаря
-    const whereConditions = {
-      ...(caseId && { caseId }),
-    };
-
-    // Добавляем дополнительные условия для фильтрации
-    if (caseId) {
-      whereConditions.caseId = caseId; // Фильтрация по caseId
-    }
-
-    if (name) {
-      whereConditions.name = {
-        [Op.iLike]: `%${name}%`, // Фильтрация по имени (нечувствительно к регистру)
-      };
-    }
-
-    if (rarity) {
-      whereConditions.rarity = rarity; // Фильтрация по редкости
-    }
-
-    // Получаем общее количество предметов
-    const totalItems = await Item.count({
-      where: whereConditions,
-    });
-
-    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE); // Вычисляем общее количество страниц
-
-    // Получаем предметы инвентаря с учетом пагинации и сортировки
-    const inventoryItems = await Item.findAll({
-      where: whereConditions,
-      order: getOrderQuery(sortBy, order), // Вызов функции для получения условий сортировки
-      limit: ITEMS_PER_PAGE,
-      offset: (page - 1) * ITEMS_PER_PAGE,
-    });
-
-    // Возвращаем результат
+    // Возвращаем инвентарь пользователя
     res.json({
-      items: inventoryItems,
-      currentPage: page,
-      totalPages: totalPages,
+      items: user.inventory, // Доступ к инвентарю
+      currentPage: 1,
+      totalPages: 1, // Можно изменить в зависимости от пагинации
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Ошибка сервера" });
   }
 });
-
 // Функция для получения условий сортировки
 const getOrderQuery = (sortBy, order) => {
   const sortQuery = [];
