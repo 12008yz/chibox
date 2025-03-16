@@ -16,17 +16,17 @@ Item.belongsTo(Case, { foreignKey: "caseId" });
 User.hasMany(Notification, { foreignKey: "receiverId" });
 Notification.belongsTo(User, { foreignKey: "receiverId" });
 
-SlotGame.hasMany(User, { foreignKey: "id" });
-User.belongsTo(SlotGame, { foreignKey: "id" });
+SlotGame.hasMany(User, { foreignKey: "userId" });
+User.belongsTo(SlotGame, { foreignKey: "userId" });
 
-Marketplace.hasMany(Item, { foreignKey: "caseId" });
-Item.belongsTo(Marketplace, { foreignKey: "caseId" });
+Marketplace.hasMany(Item, { foreignKey: "marketplaceId" });
+Item.belongsTo(Marketplace, { foreignKey: "marketplaceId" });
 
-User.hasMany(Item, { foreignKey: "uniqueId" }); // Изменено с itemId на uniqueId
-Item.belongsTo(User, { foreignKey: "uniqueId" }); // Изменено с itemId на uniqueId
+User.hasMany(Item, { foreignKey: "userId" });
+Item.belongsTo(User, { foreignKey: "userId" });
 
-Marketplace.hasMany(User, { foreignKey: "id" });
-User.belongsTo(Marketplace, { foreignKey: "id" });
+Marketplace.hasMany(User, { foreignKey: "marketplaceId" });
+User.belongsTo(Marketplace, { foreignKey: "marketplaceId" });
 
 // Экспорт моделей и sequelize
 module.exports = {
