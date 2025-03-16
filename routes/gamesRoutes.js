@@ -7,7 +7,6 @@ const SlotGameController = require("../games/slot");
 const updateLevel = require("../utils/updateLevel");
 const { Item } = require("../models");
 const upgradeItems = require("../games/upgrade");
-const coinFlip = require("../games/coinFlip");
 
 // Массив редкостей
 const Rarities = [
@@ -182,19 +181,6 @@ module.exports = (io) => {
   });
 
   // Маршрут для игры "Орел и Решка"
-  router.post("/coinFlip", isAuthenticated, async (req, res) => {
-    try {
-      const { bet, choice } = req.body;
-      const user = req.user;
-
-      // Передача данных в функцию coinFlip
-      const result = await coinFlip(io)(user, bet, choice);
-      res.json(result);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Ошибка при обработке ставки" });
-    }
-  });
 
   return router;
 };
