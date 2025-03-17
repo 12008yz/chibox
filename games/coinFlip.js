@@ -75,7 +75,6 @@ const coinFlip = (io) => {
           xp: user.xp,
           level: user.level,
         };
-        //aa
 
         io.to(userId).emit("userDataUpdated", userDataPayload);
       } catch (err) {
