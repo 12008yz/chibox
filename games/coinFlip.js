@@ -17,6 +17,11 @@ const coinFlip = (io) => {
   };
 
   io.on("connection", (socket) => {
+    // Обработчик для запроса текущего состояния игры
+    socket.on("requestGameState", () => {
+      socket.emit("coinFlip:gameState", gameState);
+    });
+
     socket.on("coinFlip:bet", async (user, bet, choice) => {
       try {
         if (isNaN(bet) || bet < 1 || bet > 1000000) {
@@ -31,9 +36,8 @@ const coinFlip = (io) => {
         const betType = choice === 0 ? "heads" : "tails";
         gameState[betType].bets[user.id] = bet;
 
-        dbUser.walletBalance -= bet;
-        updateLevel(dbUser, bet);
-
+        const previousBalance = dbUser.walletBalance; // Сохраняем предыдущий баланс
+        dbUser.walletBalance -= bet; // Списываем ставку
         await dbUser.save();
 
         const userDataPayload = {
@@ -45,6 +49,9 @@ const coinFlip = (io) => {
 
         gameState[betType].players[user.id] = dbUser;
         io.emit("coinFlip:gameState", gameState);
+
+        // Передаем previousBalance в calculatePayout
+        calculatePayout(previousBalance, choice);
       } catch (err) {
         console.log(err);
       }
@@ -57,7 +64,7 @@ const coinFlip = (io) => {
     });
   });
 
-  const calculatePayout = async (result) => {
+  const calculatePayout = async (previousBalance, result) => {
     let winningChoice = result === 0 ? "heads" : "tails";
 
     for (let userId in gameState[winningChoice].choices) {
@@ -65,8 +72,18 @@ const coinFlip = (io) => {
         const betAmount = gameState[winningChoice].bets[userId];
         const user = await User.findByPk(userId);
 
-        user.walletBalance += betAmount * 2;
-        updateUserWinnings(user, betAmount);
+        // Проверяем, совпадает ли выбор пользователя с результатом
+        if (gameState[winningChoice].choices[userId] === winningChoice) {
+          console.log(
+            `User ID: ${userId}, Bet Amount: ${betAmount}, Previous Balance: ${previousBalance}`
+          );
+          user.walletBalance = previousBalance + betAmount * 2; // Обновляем баланс после выигрыша
+          console.log(`New Balance after win: ${user.walletBalance}`);
+          updateUserWinnings(user, betAmount);
+        } else {
+          console.log(`User ID: ${userId} lost the bet.`);
+          // В случае проигрыша, баланс не изменяется
+        }
 
         await user.save();
 
@@ -92,6 +109,7 @@ const coinFlip = (io) => {
       io.emit("coinFlip:result", result);
       await calculatePayout(result);
 
+      // Сброс состояния игры
       gameState = {
         heads: {
           players: {},
@@ -105,8 +123,9 @@ const coinFlip = (io) => {
         },
       };
 
+      // Запуск нового раунда через 14 секунд
       setTimeout(startGame, 14000);
-    }, 5000);
+    }, 5000); // Анимация монеты длится 5 секунд
   };
 
   startGame();

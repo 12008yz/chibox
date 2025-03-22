@@ -182,7 +182,11 @@ module.exports = (io) => {
     }
   });
 
-  // Маршрут для игры "Орел и Решка"
+  // router.post("/coinFlip/bet", isAuthenticated, (req, res) => {
+  //   const { user, bet, choice } = req.body;
+  //   io.emit("coinFlip:bet", user, bet, choice);
+  //   res.status(200).json({ message: "Bet placed successfully" });
+  // });
 
   return router;
 };
