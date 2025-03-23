@@ -7,7 +7,6 @@ const SlotGameController = require("../games/slot");
 const updateLevel = require("../utils/updateLevel");
 const { Item } = require("../models");
 const upgradeItems = require("../games/upgrade");
-const coinFlip = require("../games/coinFlip");
 
 // Массив редкостей
 const Rarities = [
@@ -74,7 +73,6 @@ const addUniqueInfoToItem = (item) => {
 };
 
 module.exports = (io) => {
-  coinFlip(io);
   router.post("/openCase/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
