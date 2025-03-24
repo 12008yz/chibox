@@ -102,9 +102,7 @@ const coinFlip = (io) => {
 
   const startGame = async () => {
     io.emit("coinFlip:start");
-
     const result = Math.floor(Math.random() * 2);
-
     setTimeout(async () => {
       console.log("Sending coinFlip:result:", result); // Лог для отладки
       io.emit("coinFlip:result", result);
