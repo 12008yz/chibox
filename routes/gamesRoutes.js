@@ -7,6 +7,7 @@ const SlotGameController = require("../games/slot");
 const updateLevel = require("../utils/updateLevel");
 const { Item } = require("../models");
 const upgradeItems = require("../games/upgrade");
+const coinFlip = require("../games/coinFlip"); // Подключение coinFlip
 
 // Массив редкостей
 const Rarities = [
@@ -73,6 +74,8 @@ const addUniqueInfoToItem = (item) => {
 };
 
 module.exports = (io) => {
+  coinFlip(io); // Инициализация coinFlip с io
+
   router.post("/openCase/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
@@ -179,12 +182,6 @@ module.exports = (io) => {
       res.status(500).json({ message: error.message });
     }
   });
-
-  // router.post("/coinFlip/bet", isAuthenticated, (req, res) => {
-  //   const { user, bet, choice } = req.body;
-  //   io.emit("coinFlip:bet", user, bet, choice);
-  //   res.status(200).json({ message: "Bet placed successfully" });
-  // });
 
   return router;
 };

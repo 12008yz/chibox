@@ -17,17 +17,18 @@ const coinFlip = (io) => {
   };
 
   io.on("connection", (socket) => {
-    // Обработчик для запроса текущего состояния игры
-    socket.on("requestGameState", () => {
-      socket.emit("coinFlip:gameState", gameState);
-    });
-
     socket.on("coinFlip:bet", async (user, bet, choice) => {
+      console.log(`Received bet: ${bet} on choice: ${choice} from user: ${user.id}`);
+      
       try {
+        // Обработка ставки игрока
+
+        // Если ставка не является числом или меньше 0, вернуть ошибку
         if (isNaN(bet) || bet < 1 || bet > 1000000) {
           return;
         }
 
+        // Проверка, есть ли у пользователя достаточный баланс
         const dbUser = await User.findByPk(user.id);
         if (dbUser.walletBalance < bet) {
           return;
@@ -36,8 +37,9 @@ const coinFlip = (io) => {
         const betType = choice === 0 ? "heads" : "tails";
         gameState[betType].bets[user.id] = bet;
 
-        const previousBalance = dbUser.walletBalance; // Сохраняем предыдущий баланс
-        dbUser.walletBalance -= bet; // Списываем ставку
+        // Обновление баланса игрока
+        updateLevel(dbUser, bet);
+        dbUser.walletBalance -= bet;
         await dbUser.save();
 
         const userDataPayload = {
@@ -47,43 +49,39 @@ const coinFlip = (io) => {
         };
         io.to(user.id).emit("userDataUpdated", userDataPayload);
 
+        // После обновления пользователя добавляем его в состояние игры
         gameState[betType].players[user.id] = dbUser;
-        io.emit("coinFlip:gameState", gameState);
 
-        // Передаем previousBalance в calculatePayout
-        calculatePayout(previousBalance, choice);
+        // Отправка обновленного состояния игры всем клиентам
+        io.emit("coinFlip:gameState", gameState);
+      console.log('Ставка Работает!');
+
       } catch (err) {
         console.log(err);
       }
     });
 
     socket.on("coinFlip:choice", (user, choice) => {
+      // Обработка выбора игрока
       const choiceType = choice === 0 ? "heads" : "tails";
       gameState[choiceType].choices[user.id] = choice;
+
+      // Отправка обновленного состояния игры всем клиентам
       io.emit("coinFlip:gameState", gameState);
     });
   });
 
-  const calculatePayout = async (previousBalance, result) => {
+  const calculatePayout = async (result) => {
     let winningChoice = result === 0 ? "heads" : "tails";
 
     for (let userId in gameState[winningChoice].choices) {
+      // Игрок выигрывает, обновляем его баланс
       try {
         const betAmount = gameState[winningChoice].bets[userId];
         const user = await User.findByPk(userId);
 
-        // Проверяем, совпадает ли выбор пользователя с результатом
-        if (gameState[winningChoice].choices[userId] === winningChoice) {
-          console.log(
-            `User ID: ${userId}, Bet Amount: ${betAmount}, Previous Balance: ${previousBalance}`
-          );
-          user.walletBalance = previousBalance + betAmount * 2; // Обновляем баланс после выигрыша
-          console.log(`New Balance after win: ${user.walletBalance}`);
-          updateUserWinnings(user, betAmount);
-        } else {
-          console.log(`User ID: ${userId} lost the bet.`);
-          // В случае проигрыша, баланс не изменяется
-        }
+        user.walletBalance += betAmount * 2;
+        updateUserWinnings(user, betAmount);
 
         await user.save();
 
@@ -102,10 +100,14 @@ const coinFlip = (io) => {
 
   const startGame = async () => {
     io.emit("coinFlip:start");
+
     const result = Math.floor(Math.random() * 2);
+
     setTimeout(async () => {
-      console.log("Sending coinFlip:result:", result); // Лог для отладки
       io.emit("coinFlip:result", result);
+console.log('Результат есть!');
+
+      // Расчет выплат на основе результата игры и выборов игроков
       await calculatePayout(result);
 
       // Сброс состояния игры
@@ -122,9 +124,8 @@ const coinFlip = (io) => {
         },
       };
 
-      // Запуск нового раунда через 14 секунд
       setTimeout(startGame, 14000);
-    }, 5000); // Анимация монеты длится 5 секунд
+    }, 5000);
   };
 
   startGame();

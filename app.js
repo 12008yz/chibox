@@ -87,7 +87,7 @@ app.use((err, req, res, next) => {
 let onlineUsers = 0;
 
 io.on("connection", (socket) => {
-  console.log("A user connected");
+  console.log("A user connected 123123");
 
   socket.on("testEvent", (data) => {
     console.log("Received testEvent:", data);
