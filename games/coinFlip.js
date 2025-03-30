@@ -18,8 +18,10 @@ const coinFlip = (io) => {
 
   io.on("connection", (socket) => {
     socket.on("coinFlip:bet", async (user, bet, choice) => {
-      console.log(`Received bet: ${bet} on choice: ${choice} from user: ${user.id}`);
-      
+      console.log(
+        `Received bet: ${bet} on choice: ${choice} from user: ${user.id}`
+      );
+
       try {
         // Обработка ставки игрока
 
@@ -54,8 +56,7 @@ const coinFlip = (io) => {
 
         // Отправка обновленного состояния игры всем клиентам
         io.emit("coinFlip:gameState", gameState);
-      console.log('Ставка Работает!');
-
+        console.log("Ставка Работает!");
       } catch (err) {
         console.log(err);
       }
@@ -104,13 +105,15 @@ const coinFlip = (io) => {
     const result = Math.floor(Math.random() * 2);
 
     setTimeout(async () => {
-      io.emit("coinFlip:result", result);
-console.log('Результат есть!');
+      // Отправляем результат только после 5 секунд анимации
+      setTimeout(() => {
+        io.emit("coinFlip:result", result);
+      }, 5000); // 5 секунд на анимацию
 
-      // Расчет выплат на основе результата игры и выборов игроков
+      // Calculate payouts based on game result and player choices
       await calculatePayout(result);
 
-      // Сброс состояния игры
+      // Reset game state
       gameState = {
         heads: {
           players: {},
@@ -121,11 +124,11 @@ console.log('Результат есть!');
           players: {},
           bets: {},
           choices: {},
-        },
+        }
       };
 
-      setTimeout(startGame, 14000);
-    }, 5000);
+      setTimeout(startGame, 14000); // 14 секунд до следующей игры
+    }, 5000); // 5 секунд на ставки
   };
 
   startGame();
