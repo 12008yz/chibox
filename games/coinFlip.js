@@ -4,6 +4,7 @@ const updateLevel = require("../utils/updateLevel");
 
 const coinFlip = (io) => {
   let gameState = {
+    processedBets: {}, // Добавляем объект для отслеживания обработанных ставок
     heads: {
       players: {},
       bets: {},
@@ -17,12 +18,18 @@ const coinFlip = (io) => {
   };
 
   io.on("connection", (socket) => {
-    socket.on("coinFlip:bet", async (user, bet, choice) => {
+    socket.on("coinFlip:bet", async ({ user, bet, choice }) => {
       console.log(
         `Received bet: ${bet} on choice: ${choice} from user: ${user.id}`
       );
 
       try {
+        // Проверка, была ли уже обработана ставка для данного пользователя
+        if (gameState.processedBets[user.id]) {
+          console.log(`Ставка уже обработана для пользователя: ${user.id}`);
+          return; // Если ставка уже обработана, выходим
+        }
+
         // Обработка ставки игрока
 
         // Если ставка не является числом или меньше 0, вернуть ошибку
@@ -54,6 +61,9 @@ const coinFlip = (io) => {
         // После обновления пользователя добавляем его в состояние игры
         gameState[betType].players[user.id] = dbUser;
 
+        // Отмечаем, что ставка была обработана
+        gameState.processedBets[user.id] = true;
+
         // Отправка обновленного состояния игры всем клиентам
         io.emit("coinFlip:gameState", gameState);
         console.log("Ставка Работает!");
@@ -62,7 +72,7 @@ const coinFlip = (io) => {
       }
     });
 
-    socket.on("coinFlip:choice", (user, choice) => {
+    socket.on("coinFlip:choice", ({ user, choice }) => {
       // Обработка выбора игрока
       const choiceType = choice === 0 ? "heads" : "tails";
       gameState[choiceType].choices[user.id] = choice;
@@ -102,6 +112,9 @@ const coinFlip = (io) => {
   const startGame = async () => {
     io.emit("coinFlip:start");
 
+    // Сбрасываем обработанные ставки перед началом новой игры
+    gameState.processedBets = {}; // Обнуляем объект обработанных ставок
+
     const result = Math.floor(Math.random() * 2);
 
     setTimeout(async () => {
@@ -115,6 +128,7 @@ const coinFlip = (io) => {
 
       // Reset game state
       gameState = {
+        processedBets: {}, // Сбрасываем обработанные ставки
         heads: {
           players: {},
           bets: {},
